@@ -9,7 +9,7 @@ import frc.robot.subsystems.swerve.SwerveDrive;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 
-public abstract class DriveCommand extends Command {
+public abstract class DriveCommandBase extends Command {
 
   private final MultiLinearInterpolator oneAprilTagLookupTable =
       new MultiLinearInterpolator(VisionConstants.ONE_APRIL_TAG_LOOKUP_TABLE);
@@ -27,7 +27,7 @@ public abstract class DriveCommand extends Command {
    * @param driveSubsystem The subsystem for the swerve drive
    * @param vision The subsystem for vision measurements
    */
-  public DriveCommand(SwerveDrive swerveDrive, Vision vision) {
+  public DriveCommandBase(SwerveDrive swerveDrive, Vision vision) {
     this.swerveDrive = swerveDrive;
     this.vision = vision;
     // It is important that you do addRequirements(driveSubsystem, vision) in whatever

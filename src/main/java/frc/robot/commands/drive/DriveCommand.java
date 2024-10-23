@@ -3,13 +3,14 @@ package frc.robot.commands.drive;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.swerve.SwerveConstants.DriveConstants;
 import frc.robot.subsystems.vision.Vision;
+import frc.robot.commands.drive.DriveCommand.DriveCommandBase;
 import frc.robot.subsystems.swerve.SwerveDrive;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 // import frc.robot.subsystems.vision.VisionSubsystem;
 
-public class DriveCommand extends DriveCommand {
+public class DriveCommand extends DriveCommandBase {
 
   private final SwerveDrive driveSubsystem;
 
@@ -38,7 +39,7 @@ public class DriveCommand extends DriveCommand {
       BooleanSupplier isHighRotation) {
     super(driveSubsystem, visionSubsystem);
     this.driveSubsystem = driveSubsystem;
-    addRequirements(driveSubsystem);
+    addRequirements(driveSubsystem, visionSubsystem);
     this.leftJoystickY = leftJoystickY;
     this.leftJoystickX = leftJoystickX;
     this.rightJoystickX = rightJoystickX;
