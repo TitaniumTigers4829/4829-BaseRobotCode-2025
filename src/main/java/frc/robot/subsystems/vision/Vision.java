@@ -25,7 +25,7 @@ public class Vision extends SubsystemBase {
     Logger.processInputs(visionIO.getLimelightName(0), inputs);
   }
 
-  // Add methods to support DriveCommandBase
+  // Add methods to support DriveCommand
   public int getNumberOfAprilTags(int limelightNumber) {
     return visionIO.getNumberOfAprilTags(limelightNumber);
   }

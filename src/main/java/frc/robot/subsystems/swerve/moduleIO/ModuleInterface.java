@@ -77,7 +77,7 @@ public interface ModuleInterface {
 
   default void stopModule() {}
 
-  default double getTurnRadians() {
+  default double getTurnRotations() {
     return 0.0;
   }
 

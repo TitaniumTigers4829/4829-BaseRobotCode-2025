@@ -1,11 +1,24 @@
 package frc.robot.subsystems.swerve.moduleIO;
 
+
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.HardwareConstants;
+import frc.robot.extras.util.DeviceCANBus;
+import frc.robot.subsystems.swerve.SwerveConstants.ModuleConfig;
+import frc.robot.subsystems.swerve.SwerveConstants.ModuleConstants;
+import frc.robot.subsystems.swerve.odometryThread.OdometryThread;
+import java.util.Queue;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -14,16 +27,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Constants.HardwareConstants;
-import frc.robot.extras.util.DeviceCANBus;
-import frc.robot.subsystems.swerve.SwerveConstants.ModuleConfig;
-import frc.robot.subsystems.swerve.SwerveConstants.ModuleConstants;
-import frc.robot.subsystems.swerve.odometryThread.OdometryThread;
-import java.util.Queue;
 
 public class PhysicalModule implements ModuleInterface {
   private final TalonFX driveMotor;
@@ -200,13 +203,14 @@ public class PhysicalModule implements ModuleInterface {
    */
   @Override
   public void setDesiredState(SwerveModuleState desiredState) {
-    double turnRadians = getTurnRadians();
+    double turnRadians = getTurnRotations();
     // Optimize the reference state to avoid spinning further than 90 degrees
-    SwerveModuleState optimizedDesiredState =
-        SwerveModuleState.optimize(
-            desiredState, Rotation2d.fromRotations(turnRadians));
+    SwerveModuleState setpoint = new SwerveModuleState(desiredState.speedMetersPerSecond, desiredState.angle);
 
-    if (Math.abs(optimizedDesiredState.speedMetersPerSecond) < 0.01) {
+    setpoint.optimize(Rotation2d.fromRotations(turnRadians));
+    setpoint.cosineScale(Rotation2d.fromRotations(turnRadians));
+
+    if (Math.abs(setpoint.speedMetersPerSecond) < 0.01) {
       driveMotor.set(0);
       turnMotor.set(0);
       return;
@@ -214,17 +218,16 @@ public class PhysicalModule implements ModuleInterface {
 
     // Converts meters per second to rotations per second
     double desiredDriveRPS =
-        optimizedDesiredState.speedMetersPerSecond
+        setpoint.speedMetersPerSecond
             * ModuleConstants.DRIVE_GEAR_RATIO
             / ModuleConstants.WHEEL_CIRCUMFERENCE_METERS;
 
     driveMotor.setControl(velocityRequest.withVelocity(desiredDriveRPS));
     turnMotor.setControl(
-        mmPositionRequest.withPosition(optimizedDesiredState.angle.getRotations()));
-    // turnMotor.set(0);
+        mmPositionRequest.withPosition(setpoint.angle.getRotations()));
 
     SmartDashboard.putNumber("desired State", desiredDriveRPS);
-    SmartDashboard.putNumber("desired turn pos", optimizedDesiredState.angle.getRotations());
+    SmartDashboard.putNumber("desired turn pos", setpoint.angle.getRotations());
   }
 
   @Override
@@ -232,9 +235,9 @@ public class PhysicalModule implements ModuleInterface {
     driveMotor.setNeutralMode(enable ? NeutralModeValue.Brake : NeutralModeValue.Coast);
   }
 
-  public double getTurnRadians() {
+  public double getTurnRotations() {
     turnEncoder.getAbsolutePosition().refresh();
-    return Rotation2d.fromRotations(turnEncoder.getAbsolutePosition().getValue()).getRotations();
+    return Rotation2d.fromRotations(turnEncoder.getAbsolutePosition().getValueAsDouble()).getRotations();
   }
 
   @Override
